@@ -496,18 +496,6 @@ kill(int pid)
   return -1;
 }
 
-// Print list of current running processes
-void 
-process_analyzer(){
-  struct proc *p;
-  acquire(&ptable.lock);
-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-    if( p->state!= UNUSED) {
-      cprintf("pid:%d name:%s\n",p->pid,p->name);
-    }
-  }
-  release(&ptable.lock);
-}
 //PAGEBREAK: 36
 // Print a process listing to console.  For debugging.
 // Runs when user types ^P on console.

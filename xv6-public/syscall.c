@@ -103,46 +103,29 @@ extern int sys_unlink(void);
 extern int sys_wait(void);
 extern int sys_write(void);
 extern int sys_uptime(void);
-extern int sys_add(void);
-extern int sys_(void);
-extern int sys_toggle(void);
-extern int sys_print_count(void);
-extern int sys_ps(void);
-extern int sys_send(void);
-extern int sys_recv(void);
-
-extern int toggle_state;
-extern int numSysCalls[];
-extern const char* sysCallName[];
 
 static int (*syscalls[])(void) = {
-[SYS_fork]          sys_fork,
-[SYS_exit]          sys_exit,
-[SYS_wait]          sys_wait,
-[SYS_pipe]          sys_pipe,
-[SYS_read]          sys_read,
-[SYS_kill]          sys_kill,
-[SYS_exec]          sys_exec,
-[SYS_fstat]         sys_fstat,
-[SYS_chdir]         sys_chdir,
-[SYS_dup]           sys_dup,
-[SYS_getpid]        sys_getpid,
-[SYS_sbrk]          sys_sbrk,
-[SYS_sleep]         sys_sleep,
-[SYS_uptime]        sys_uptime,
-[SYS_open]          sys_open,
-[SYS_write]         sys_write,
-[SYS_mknod]         sys_mknod,
-[SYS_unlink]        sys_unlink,
-[SYS_link]          sys_link,
-[SYS_mkdir]         sys_mkdir,
-[SYS_close]         sys_close,
-[SYS_add]           sys_add,
-[SYS_toggle]        sys_toggle,
-[SYS_print_count]   sys_print_count,
-[SYS_ps]            sys_ps,
-[SYS_send]          sys_send,
-[SYS_recv]          sys_recv,
+[SYS_fork]    sys_fork,
+[SYS_exit]    sys_exit,
+[SYS_wait]    sys_wait,
+[SYS_pipe]    sys_pipe,
+[SYS_read]    sys_read,
+[SYS_kill]    sys_kill,
+[SYS_exec]    sys_exec,
+[SYS_fstat]   sys_fstat,
+[SYS_chdir]   sys_chdir,
+[SYS_dup]     sys_dup,
+[SYS_getpid]  sys_getpid,
+[SYS_sbrk]    sys_sbrk,
+[SYS_sleep]   sys_sleep,
+[SYS_uptime]  sys_uptime,
+[SYS_open]    sys_open,
+[SYS_write]   sys_write,
+[SYS_mknod]   sys_mknod,
+[SYS_unlink]  sys_unlink,
+[SYS_link]    sys_link,
+[SYS_mkdir]   sys_mkdir,
+[SYS_close]   sys_close,
 };
 
 void
@@ -153,9 +136,6 @@ syscall(void)
 
   num = curproc->tf->eax;
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
-    if(num!=SYS_toggle && toggle_state){
-      numSysCalls[num]++;
-    }
     curproc->tf->eax = syscalls[num]();
   } else {
     cprintf("%d %s: unknown sys call %d\n",

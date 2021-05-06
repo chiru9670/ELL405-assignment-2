@@ -182,29 +182,8 @@ UPROGS=\
 	_wc\
 	_zombie\
 
-# My commands
-# UPROGS+=\
-# 	_hello\
-# 	_user_add\
-# 	_user_toggle\
-# 	_print_count\
-# 	_test_ps\
-
-# Tester programs
-UPROGS+=\
-	_assig1_1\
-	_assig1_2\
-	_assig1_3\
-	_assig1_4\
-	_assig1_5\
-	_assig1_6\
-	_assig1_7\
-	_assig1_8\
-
-# Added arr in the below 2 lines
-# It's the dataset for distributed sum algo
-fs.img: mkfs README arr $(UPROGS)
-	./mkfs fs.img README arr $(UPROGS)
+fs.img: mkfs README $(UPROGS)
+	./mkfs fs.img README $(UPROGS)
 
 -include *.d
 
@@ -251,9 +230,6 @@ qemu-memfs: xv6memfs.img
 qemu-nox: fs.img xv6.img
 	$(QEMU) -nographic $(QEMUOPTS)
 
-qemu-curses: fs.img xv6.img
-	$(QEMU) -curses $(QEMUOPTS)
-
 .gdbinit: .gdbinit.tmpl
 	sed "s/localhost:1234/localhost:$(GDBPORT)/" < $^ > $@
 
@@ -264,10 +240,6 @@ qemu-gdb: fs.img xv6.img .gdbinit
 qemu-nox-gdb: fs.img xv6.img .gdbinit
 	@echo "*** Now run 'gdb'." 1>&2
 	$(QEMU) -nographic $(QEMUOPTS) -S $(QEMUGDB)
-
-qemu-curses-gdb: fs.img xv6.img .gdbinit
-	@echo "*** Now run 'gdb'." 1>&2
-	$(QEMU) -curses $(QEMUOPTS) -S $(QEMUGDB)
 
 # CUT HERE
 # prepare dist for students
@@ -281,25 +253,6 @@ EXTRA=\
 	printf.c umalloc.c\
 	README dot-bochsrc *.pl toc.* runoff runoff1 runoff.list\
 	.gdbinit.tmpl gdbutil\
-
-# My commands
-# EXTRA+=\
-#        hello.c\
-#        user_add.c\
-#        user_toggle.c\
-#        print_count.c\
-#        test_ps.c\
-
-# Tester programs
-EXTRA+=\
-       assig1_1.c\
-       assig1_2.c\
-       assig1_3.c\
-       assig1_4.c\
-       assig1_5.c\
-       assig1_6.c\
-       assig1_7.c\
-       assig1_8.c\
 
 dist:
 	rm -rf dist
