@@ -8,6 +8,21 @@
 #include "traps.h"
 #include "spinlock.h"
 
+// free page 
+int freePage(){
+  #ifdef SELECTION=FIFO
+    return freeFIFO();
+  #endif 
+  #ifdef SELECTION=SCFIFO
+    return freeSCFIFO();
+  #endif 
+  #ifdef SELECTION=NFU
+    return freeNFU();
+  #endif 
+  return -1;
+}
+
+// free page 
 // Interrupt descriptor table (shared by all CPUs).
 struct gatedesc idt[256];
 extern uint vectors[];  // in vectors.S: array of 256 entry pointers
@@ -48,6 +63,18 @@ trap(struct trapframe *tf)
 
   switch(tf->trapno){
   case T_IRQ0 + IRQ_TIMER:
+    
+    // CHANGED 
+    struct proc* p = myproc();
+    uint a = PGROUNDUP(p->sz);
+    for(int i=0;i<a;i+=PGSIZE){
+      pte_t* tooinfintyandbeyond = walkpgdir(p->pgdir,i,0);
+      if( !((*tooinfintyandbeyond) & PTE_PG) && ((*tooinfintyandbeyond) & PTE_A) ){
+          (*tooinfintyandbeyond) &= ~PTE_A;
+      }
+    }
+    lcr3(V2P(p->pgdir));
+    // CHANGED 
     if(cpuid() == 0){
       acquire(&tickslock);
       ticks++;
@@ -105,7 +132,6 @@ trap(struct trapframe *tf)
   if(myproc() && myproc()->state == RUNNING &&
      tf->trapno == T_IRQ0+IRQ_TIMER)
     yield();
-
   // Check if the process has been killed since we yielded
   if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)
     exit();

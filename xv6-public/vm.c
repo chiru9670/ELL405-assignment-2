@@ -385,6 +385,65 @@ copyout(pde_t *pgdir, uint va, void *p, uint len)
   return 0;
 }
 
+void moveToSwap(pte_t* a,uint help){
+  struct proc* p = myproc(); 
+  for(int i=0;i<30;i++){
+    if(p->swapspace_indexes[i]==-1){
+      writeToSwapFile(p,help,i*PGSIZE,PGSIZE);
+      p->swapspace_indexes[i] = help;
+      *a &= ~PTE_P;
+      *a |= PTE_PG;
+      kfree(P2V(*a));
+    }
+  }
+  lcr3(V2P(p->pgdir));
+}
+
+int freeFIFO(){
+  struct proc* p = myproc();
+  uint a = PGROUNDUP(p->sz); 
+  for(int i=0;i<a;i+=PGSIZE){
+    pte_t* tooinfintyandbeyond = walkpgdir(p->pgdir,i,0);
+    if( !(*tooinfintyandbeyond & PTE_PG) ){
+        moveToSwap(tooinfintyandbeyond,i);
+        return 0;
+    }
+  }
+  return -1;
+}
+
+int freeSCFIFO(){
+  struct proc* p = myproc();
+  uint a = PGROUNDUP(p->sz);
+  for(int j=0;j<2;j++){ 
+    for(int i=0;i<a;i+=PGSIZE){
+      pte_t* tooinfintyandbeyond = walkpgdir(p->pgdir,i,0);
+      if( !((*tooinfintyandbeyond) & PTE_PG) && ! ((*tooinfintyandbeyond) & PTE_A) ){
+          moveToSwap(tooinfintyandbeyond,i);
+          return 0;
+      }else if( !((*tooinfintyandbeyond) & PTE_PG) && ((*tooinfintyandbeyond) & PTE_A)){
+          (*tooinfintyandbeyond) &= ~PTE_A; 
+      }
+    }
+  }
+  return -1;
+}
+
+int freeNFU(){
+  struct proc* p = myproc();
+  uint a = PGROUNDUP(p->sz);
+  while(1){ 
+    for(int i=0;i<a;i+=PGSIZE){
+      pte_t* tooinfintyandbeyond = walkpgdir(p->pgdir,i,0);
+      if( !((*tooinfintyandbeyond) & PTE_PG) && !((*tooinfintyandbeyond) & PTE_A) ){
+          moveToSwap(tooinfintyandbeyond,i);
+          return 0;
+      }
+    }
+    // maibi sleep 
+  }
+}
+
 //PAGEBREAK!
 // Blank page.
 //PAGEBREAK!

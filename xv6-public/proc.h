@@ -49,11 +49,16 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
-  int swapspace_indexes[30];
   //Swap file. must initiate with create swap file
   struct file *swapFile;      //page file
+  int swapspace_indexes[30];
+  int total_page_outs;
+  int total_page_faults;
 };
 
+int freeFIFO();
+int freeSCFIFO();
+int freeNFU();
 // Process memory is laid out contiguously, low addresses first:
 //   text
 //   original data and bss
