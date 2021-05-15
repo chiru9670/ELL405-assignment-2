@@ -8,17 +8,20 @@
 #include "traps.h"
 #include "spinlock.h"
 
-// free page 
-int freePage(){
-  #ifdef SELECTION=FIFO
-    return freeFIFO();
-  #endif 
-  #ifdef SELECTION=SCFIFO
-    return freeSCFIFO();
-  #endif 
-  #ifdef SELECTION=NFU
-    return freeNFU();
-  #endif 
+// free page
+int freePage()
+{
+#ifdef FIFO
+  return freeFIFO();
+#else
+#ifdef SCFIFO
+  return freeSCFIFO();
+#else
+#ifdef NFU
+  return freeNFU();
+#endif
+#endif
+#endif
   return -1;
 }
 
@@ -63,18 +66,21 @@ trap(struct trapframe *tf)
 
   switch(tf->trapno){
   case T_IRQ0 + IRQ_TIMER:
-    
-    // CHANGED 
-    struct proc* p = myproc();
+    // CHANGED
+#ifdef NFU
+    struct proc *p = myproc();
     uint a = PGROUNDUP(p->sz);
-    for(int i=0;i<a;i+=PGSIZE){
-      pte_t* tooinfintyandbeyond = walkpgdir(p->pgdir,i,0);
-      if( !((*tooinfintyandbeyond) & PTE_PG) && ((*tooinfintyandbeyond) & PTE_A) ){
-          (*tooinfintyandbeyond) &= ~PTE_A;
+    for (int i = 0; i < a; i += PGSIZE)
+    {
+      pte_t *tooinfintyandbeyond = walkpgdir(p->pgdir, i, 0);
+      if (!((*tooinfintyandbeyond) & PTE_PG) && ((*tooinfintyandbeyond) & PTE_A))
+      {
+        (*tooinfintyandbeyond) &= ~PTE_A;
       }
     }
     lcr3(V2P(p->pgdir));
-    // CHANGED 
+#endif
+    // CHANGED
     if(cpuid() == 0){
       acquire(&tickslock);
       ticks++;
