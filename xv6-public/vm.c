@@ -230,13 +230,17 @@ allocuvm(pde_t *pgdir, uint oldsz, uint newsz)
     return oldsz;
 
   a = PGROUNDUP(oldsz);
+
+  // CHANGED
+  struct proc *curproc = myproc();
+  // CHANGED
   for(; a < newsz; a += PGSIZE){
 
     // CHANGED
 #ifndef NONE
-    if (myproc()->pgdir == pgdir) // Not always true, when called in exec() this is not true
+    if (curproc->pgdir == pgdir && strcmp(curproc->name, "init") != 0 && strcmp(curproc->name, "sh") != 0) // Not always true, when called in exec() this is not true
     {
-      if (myproc()->pages_in_memory >= MAX_PSYC_PAGES - 1)
+      if (curproc->pages_in_memory >= MAX_PSYC_PAGES - 1)
       {
         if(freePage() == -1) {
           panic("Failed to find a page to free!!\n");
@@ -261,9 +265,9 @@ allocuvm(pde_t *pgdir, uint oldsz, uint newsz)
     }
 
     // CHANGED
-    if (myproc()->pgdir == pgdir) // Not always true, when called in exec() this is not true
+    if (curproc->pgdir == pgdir) // Not always true, when called in exec() this is not true
     {
-      myproc()->pages_in_memory++;
+      curproc->pages_in_memory++;
     }
     // CHANGED
   }
@@ -458,6 +462,7 @@ int swapinPage(uint faultingva) {
   if(readFromSwapFile(curproc, (char *)faultingPageaddr, placeOnFile, PGSIZE) == -1){
     return 0;
   }
+  switchuvm(curproc);
   return 1;
 }
 
