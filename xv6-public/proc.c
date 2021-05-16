@@ -113,6 +113,7 @@ found:
   p->context->eip = (uint)forkret;
   p->total_page_faults = 0;
   p->total_page_outs = 0;
+  p->pages_in_memory = 0;
   return p;
 }
 

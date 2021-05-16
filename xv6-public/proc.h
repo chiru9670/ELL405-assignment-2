@@ -1,3 +1,6 @@
+#define MAX_PSYC_PAGES 15
+#define MAX_TOTAL_PAGES 30
+
 // Per-CPU state
 struct cpu {
   uchar apicid;                // Local APIC ID
@@ -51,9 +54,10 @@ struct proc {
   char name[16];               // Process name (debugging)
   //Swap file. must initiate with create swap file
   struct file *swapFile;      //page file
-  int swapspace_indexes[30];
+  int swapspace_indexes[MAX_TOTAL_PAGES];
   int total_page_outs;
   int total_page_faults;
+  int pages_in_memory;
 };
 
 int freeFIFO();

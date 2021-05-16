@@ -231,6 +231,21 @@ allocuvm(pde_t *pgdir, uint oldsz, uint newsz)
 
   a = PGROUNDUP(oldsz);
   for(; a < newsz; a += PGSIZE){
+
+    // CHANGED
+#ifndef NONE
+    if (myproc()->pgdir == pgdir) // Not always true, when called in exec() this is not true
+    {
+      if (myproc()->pages_in_memory >= MAX_PSYC_PAGES - 1)
+      {
+        if(freePage() == -1) {
+          panic("Failed to find a page to free!!\n");
+        }
+      }
+    }
+#endif
+    // CHANGED
+
     mem = kalloc();
     if(mem == 0){
       cprintf("allocuvm out of memory\n");
@@ -244,6 +259,13 @@ allocuvm(pde_t *pgdir, uint oldsz, uint newsz)
       kfree(mem);
       return 0;
     }
+
+    // CHANGED
+    if (myproc()->pgdir == pgdir) // Not always true, when called in exec() this is not true
+    {
+      myproc()->pages_in_memory++;
+    }
+    // CHANGED
   }
   return newsz;
 }
@@ -273,7 +295,31 @@ deallocuvm(pde_t *pgdir, uint oldsz, uint newsz)
       char *v = P2V(pa);
       kfree(v);
       *pte = 0;
+
+      // CHANGED
+      if(myproc()->pgdir == pgdir) {  // If current process is deallocating its own pages.
+                                      // if not, it always results in the process getting cleaned up
+        myproc()->pages_in_memory--;
+      }
+      // CHANGED
     }
+
+    // CHANGED
+    else if(*pte & PTE_PG) {
+      if(myproc()->pgdir == pgdir) {
+        // If current process is deallocating its own pages.
+        // If some other process's pages are being deallocated, it's coz it's either
+        // called by freevm, in which case the swap file will be deleted later anyway,
+        // or it's called by allocuvm when it fails, which is also fine as allocuvm is called
+        // on some other process's pgtable only in exec(), and that deletes the swap file
+        // when allocuvm returns with an error
+
+        uint index = findPageIndexInSwapfile(a, myproc());
+        myproc()->swapspace_indexes[index] = -1;  // Remove page from swap file
+      }
+      *pte = 0;   // Not exactly correct when above 'if' doesn't run, but in that case the process gets cleaned up anyway later
+    }
+    // CHANGED
   }
   return newsz;
 }
@@ -385,12 +431,66 @@ copyout(pde_t *pgdir, uint va, void *p, uint len)
   return 0;
 }
 
-void moveToSwap(pte_t* a,uint help){
+// Finds the index of vaddr's page in proc's swap file
+// vaddr need not be page-aligned
+uint findPageIndexInSwapfile(uint vaddr, struct proc * proc) {
+  uint pageaddr = PGROUNDDOWN(vaddr);
+  for(int i = 0; i < MAX_TOTAL_PAGES; ++i) {
+    if(PGROUNDDOWN(proc->swapspace_indexes[i]) == pageaddr) { // Doing PGROUNDDOWN just to be safe
+      return i;
+    }
+  }
+  panic("Page not found in swap file!!");
+}
+
+// Swaps a page in from swap file
+// Calls allocuvm with oldsz = page address of the faulting address, to allocate 1 page there
+// allocuvm handles if a page needs to be swapped out or not before swapping in
+int swapinPage(uint faultingva) {
+  struct proc * curproc = myproc();
+  uint faultingPageaddr = PGROUNDDOWN(faultingva);
+  if(!allocuvm(curproc->pgdir, faultingPageaddr, faultingPageaddr + PGSIZE)){
+    return 0;
+  }
+  uint index = findPageIndexInSwapfile(faultingva, curproc);
+  uint placeOnFile = index*PGSIZE;
+  curproc->swapspace_indexes[index] = -1;
+  if(readFromSwapFile(curproc, (char *)faultingPageaddr, placeOnFile, PGSIZE) == -1){
+    return 0;
+  }
+  return 1;
+}
+
+// Swap a page out to swap file
+// Uses a page replacement algo
+int freePage()
+{
+#ifndef NONE
+  myproc()->pages_in_memory--;
+#endif
+#ifdef FIFO
+  return freeFIFO();
+#else
+#ifdef SCFIFO
+  return freeSCFIFO();
+#else
+#ifdef NFU
+  return freeNFU();
+#endif
+#endif
+#endif
+  return 0;   // No page replacement algo specified
+}
+
+// Swaps out page at virtual address pageva whose pte is at a
+void moveToSwap(pte_t* a,uint pageva){
   struct proc* p = myproc(); 
-  for(int i=0;i<30;i++){
+  for(int i=0;i<MAX_TOTAL_PAGES;i++){
     if(p->swapspace_indexes[i]==-1){
-      writeToSwapFile(p,help,i*PGSIZE,PGSIZE);
-      p->swapspace_indexes[i] = help;
+      if(writeToSwapFile(p,pageva,i*PGSIZE,PGSIZE) == -1){
+        panic("Couldn't write to swap file!!");
+      }
+      p->swapspace_indexes[i] = pageva;
       *a &= ~PTE_P;
       *a |= PTE_PG;
       kfree(P2V(*a));

@@ -8,23 +8,6 @@
 #include "traps.h"
 #include "spinlock.h"
 
-// free page
-int freePage()
-{
-#ifdef FIFO
-  return freeFIFO();
-#else
-#ifdef SCFIFO
-  return freeSCFIFO();
-#else
-#ifdef NFU
-  return freeNFU();
-#endif
-#endif
-#endif
-  return -1;
-}
-
 // free page 
 // Interrupt descriptor table (shared by all CPUs).
 struct gatedesc idt[256];
@@ -110,6 +93,24 @@ trap(struct trapframe *tf)
             cpuid(), tf->cs, tf->eip);
     lapiceoi();
     break;
+    // CHANGED
+#ifndef NONE
+  case T_PGFLT:
+    myproc()->total_page_faults++;
+    uint fltva = rcr2();  //faulting virtual address
+    pte_t *pgtab;
+    pde_t * pde = &myproc()->pgdir[PDX(fltva)];
+    if(*pde & PTE_P){   // pde should have a page table present, else hard page fault
+      pgtab = (pte_t*)P2V(PTE_ADDR(*pde));
+      pte_t pte = pgtab[PTX(fltva)];
+      if(pte & PTE_PG) { // Page is in swap file
+        if(swapinPage(fltva)){
+          break;
+        }
+      }
+    }
+#endif
+    //CHANGED
 
   //PAGEBREAK: 13
   default:
