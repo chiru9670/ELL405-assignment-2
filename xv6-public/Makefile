@@ -92,7 +92,8 @@ endif
 
 # assg2: SELECTION Macro to choose the page replacement strategy; default is NFU
 SELECTION=NFU
-CFLAGS += -D$(SELECTION)
+VERBOSE_PRINT=FALSE
+CFLAGS += -D$(SELECTION) -D$(VERBOSE_PRINT)
 
 xv6.img: bootblock kernel
 	dd if=/dev/zero of=xv6.img count=10000
