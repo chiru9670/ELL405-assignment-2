@@ -223,6 +223,42 @@ fork(void)
   return pid;
 }
 
+// MyChange
+int processDetailViewer(struct proc *p) {
+  static char *states[] = {
+  [UNUSED]    "unused",
+  [EMBRYO]    "embryo",
+  [SLEEPING]  "sleep ",
+  [RUNNABLE]  "runble",
+  [RUNNING]   "run   ",
+  [ZOMBIE]    "zombie"
+  };
+  int i;
+  char *state;
+  uint pc[10];
+  if(p->state >= 0 && p->state < NELEM(states) && states[p->state])
+    state = states[p->state];
+  else
+    state = "???";
+  cprintf("%d %s %s\n", p->pid, state, p->name);
+
+  // MyChange
+  cprintf("Allocated Memory Pages : %d\n", p->pages_in_memory);
+  cprintf("Paged out : %d\n", sz/PGSIZE - p->pages_in_memory);
+  cprintf("Page faults : %d\n", p->total_page_faults);
+  cprintf("Totalnumber of pagedout : %d\n", p->total_page_outs);
+
+
+  if(p->state == SLEEPING){
+    getcallerpcs((uint*)p->context->ebp+2, pc);
+    for(i=0; i<10 && pc[i] != 0; i++)
+      cprintf(" %p", pc[i]);
+  }
+  cprintf("\n");
+
+  return (PGROUNDUP(sz)/PGSIZE);
+}
+
 // Exit the current process.  Does not return.
 // An exited process remains in the zombie state
 // until its parent calls wait() to find out it exited.
@@ -236,6 +272,7 @@ exit(void)
   if(curproc == initproc)
     panic("init exiting");
 
+
   // Close all open files.
   for(fd = 0; fd < NOFILE; fd++){
     if(curproc->ofile[fd]){
@@ -243,6 +280,11 @@ exit(void)
       curproc->ofile[fd] = 0;
     }
   }
+
+  // MyChange
+  #ifdef TRUE
+    processDetailViewer(curproc);
+  #endif
 
   begin_op();
   iput(curproc->cwd);
@@ -505,32 +547,16 @@ kill(int pid)
 void
 procdump(void)
 {
-  static char *states[] = {
-  [UNUSED]    "unused",
-  [EMBRYO]    "embryo",
-  [SLEEPING]  "sleep ",
-  [RUNNABLE]  "runble",
-  [RUNNING]   "run   ",
-  [ZOMBIE]    "zombie"
-  };
-  int i;
   struct proc *p;
-  char *state;
-  uint pc[10];
-
+  //Mychange
+  int total_pages_in_memory = 0;
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->state == UNUSED)
       continue;
-    if(p->state >= 0 && p->state < NELEM(states) && states[p->state])
-      state = states[p->state];
-    else
-      state = "???";
-    cprintf("%d %s %s", p->pid, state, p->name);
-    if(p->state == SLEEPING){
-      getcallerpcs((uint*)p->context->ebp+2, pc);
-      for(i=0; i<10 && pc[i] != 0; i++)
-        cprintf(" %p", pc[i]);
-    }
-    cprintf("\n");
+    // MyChange
+    total_pages_in_memory += processDetailViewer(p);
   }
+  // MyChange
+  int percentage = ((totalPagesAvailable - total_pages_in_memory)*100)/totalPagesAvailable;
+  cprintf("%d%% = free pages in the system", percentage);
 }

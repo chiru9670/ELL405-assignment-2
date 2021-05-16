@@ -7,6 +7,14 @@
 #include "mmu.h"
 #include "proc.h"
 
+// MyChange
+int 
+sys_processDetailsPrint(void)
+{
+  procdump();
+  return 0; 
+}
+
 int
 sys_fork(void)
 {

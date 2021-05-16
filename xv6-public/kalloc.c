@@ -8,6 +8,10 @@
 #include "memlayout.h"
 #include "mmu.h"
 #include "spinlock.h"
+#include "kalloc.h"
+
+// MyChange
+int totalPagesAvailable;
 
 void freerange(void *vstart, void *vend);
 extern char end[]; // first address after kernel loaded from ELF file
@@ -34,6 +38,9 @@ kinit1(void *vstart, void *vend)
   initlock(&kmem.lock, "kmem");
   kmem.use_lock = 0;
   freerange(vstart, vend);
+  // Add the total number of pages available 
+  // MyChange
+  totalPagesAvailable = (PGROUNDDOWN((int)vend) - PGROUNDUP((int)vstart))/PGSIZE; 
 }
 
 void
@@ -41,6 +48,9 @@ kinit2(void *vstart, void *vend)
 {
   freerange(vstart, vend);
   kmem.use_lock = 1;
+  // Add total available pages 
+  // MyChange
+  totalPagesAvailable += (PGROUNDDOWN((int)vend) - PGROUNDUP((int)vstart))/PGSIZE;
 }
 
 void

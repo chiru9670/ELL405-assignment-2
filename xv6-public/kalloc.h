@@ -1,0 +1,2 @@
+// MyChange
+extern int totalPagesAvailable; 
