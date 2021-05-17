@@ -472,6 +472,7 @@ int freePage()
 {
 #ifndef NONE
   myproc()->pages_in_memory--;
+  myproc()->total_page_outs++;
 #endif
 #ifdef FIFO
   return freeFIFO();

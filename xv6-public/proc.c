@@ -335,6 +335,11 @@ wait(void)
         kfree(p->kstack);
         p->kstack = 0;
         freevm(p->pgdir);
+        // Edited  ------------------------------------------
+        if(removeSwapFile(p)==-1){
+          panic("wait removeSwapFile command failed");
+        } 
+        // Edited -------------------------------------------
         p->pid = 0;
         p->parent = 0;
         p->name[0] = 0;
