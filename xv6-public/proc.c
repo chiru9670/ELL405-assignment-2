@@ -114,6 +114,7 @@ found:
   p->total_page_faults = 0;
   p->total_page_outs = 0;
   p->pages_in_memory = 0;
+  for(int i=0;i<30;i++) p->swapspace_indexes[i] = -1;
   return p;
 }
 
@@ -126,7 +127,7 @@ userinit(void)
   extern char _binary_initcode_start[], _binary_initcode_size[];
 
   p = allocproc();
-  
+
   initproc = p;
   if((p->pgdir = setupkvm()) == 0)
     panic("userinit: out of memory?");
