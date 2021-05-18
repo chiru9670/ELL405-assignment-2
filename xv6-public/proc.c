@@ -114,7 +114,7 @@ found:
   p->total_page_faults = 0;
   p->total_page_outs = 0;
   p->pages_in_memory = 0;
-  for(int i=0;i<30;i++) p->swapspace_indexes[i] = -1;
+  for(int i=0;i<MAX_TOTAL_PAGES;i++) p->swapspace_indexes[i] = -1;
   return p;
 }
 

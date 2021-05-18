@@ -60,9 +60,12 @@ struct proc {
   int pages_in_memory;
 };
 
-int freeFIFO();
-int freeSCFIFO();
-int freeNFU();
+int freePage();
+int swapinPage(uint faultingva);
+// int freeFIFO();
+// int freeSCFIFO();
+// int freeNFU();
+
 // Process memory is laid out contiguously, low addresses first:
 //   text
 //   original data and bss
