@@ -88,7 +88,7 @@ trap(struct trapframe *tf)
   case T_PGFLT:
     myproc()->total_page_faults++;
     uint fltva = rcr2();  //faulting virtual address
-    cprintf("pgflt %d\n", fltva);   //DEBUG
+    // cprintf("pgflt %d\n", fltva);   //DEBUG
     pte_t *pgtab;
     pde_t * pde = &myproc()->pgdir[PDX(fltva)];
     if(*pde & PTE_P){   // pde should have a page table present, else hard page fault

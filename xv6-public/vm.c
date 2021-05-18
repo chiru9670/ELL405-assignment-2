@@ -243,7 +243,7 @@ allocuvm(pde_t *pgdir, uint oldsz, uint newsz)
 #ifndef NONE
     if (curproc->pgdir == pgdir && strncmp(curproc->name, "init", strlen(curproc->name)) != 0 && strncmp(curproc->name, "sh", strlen(curproc->name)) != 0) // Not always true, when called in exec() curproc->pgdir == pgdir is not true
     {
-      if (curproc->pages_in_memory >= MAX_PSYC_PAGES - 1)
+      if (curproc->pages_in_memory >= MAX_PSYC_PAGES)
       {
         if(freePage() == -1) {
           panic("Failed to find a page to free!!\n");
@@ -380,10 +380,11 @@ copyuvm(pde_t *pgdir, uint sz)
   for(i = 0; i < sz; i += PGSIZE){
     if((pte = walkpgdir(pgdir, (void *) i, 0)) == 0)
       panic("copyuvm: pte should exist");
-    if(!(*pte & PTE_P) && !(*pte & PTE_PG))
+    if(!(*pte & PTE_P) && !(*pte & PTE_PG))   // CHANGED
       panic("copyuvm: page not present");
     pa = PTE_ADDR(*pte);
     flags = PTE_FLAGS(*pte);
+    // CHANGED
     if(*pte & PTE_PG) {
       pte_t * childpte;
       if ((childpte = walkpgdir(d, (void *)i, 1)) == 0)
@@ -391,6 +392,7 @@ copyuvm(pde_t *pgdir, uint sz)
       *childpte = pa | flags | PTE_PG;
       continue;
     }
+    // CHANGED
     if((mem = kalloc()) == 0)
       goto bad;
     memmove(mem, (char*)P2V(pa), PGSIZE);

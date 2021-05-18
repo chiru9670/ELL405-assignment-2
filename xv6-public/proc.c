@@ -302,13 +302,14 @@ exit(void)
 
   //cprintf("1");
   // Close all open files.
-          // CHANGED
+  // CHANGED
 #ifndef NONE
-        if(strncmp(myproc()->name, "init", strlen(myproc()->name)) != 0 && strncmp(myproc()->name, "sh", strlen(myproc()->name)) != 0 && removeSwapFile(myproc())==-1){
-          panic("wait: removeSwapFile command failed");
-        }
+  if (strncmp(myproc()->name, "init", strlen(myproc()->name)) != 0 && strncmp(myproc()->name, "sh", strlen(myproc()->name)) != 0 && removeSwapFile(myproc()) == -1)
+  {
+    panic("wait: removeSwapFile command failed");
+  }
 #endif
-        // CHANGED
+  // CHANGED
   for(fd = 0; fd < NOFILE; fd++){
     if(curproc->ofile[fd]){
       fileclose(curproc->ofile[fd]);

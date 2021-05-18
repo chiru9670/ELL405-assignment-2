@@ -51,12 +51,12 @@ main(int argc, char *argv[]) {
     else {
         wait();
 
-    //     sbrk(-m*PGSIZE);
-    //     processDetailsPrint();
+        sbrk(-m*PGSIZE);
+        processDetailsPrint();
 
-    //     for(int i=0;i<5;i++) ptr[i] = sbrk(PGSIZE);
+        for(int i=0;i<n;i++) ptr[i] = sbrk(PGSIZE);
 
-    //     processDetailsPrint();
+        processDetailsPrint();
     }
     exit();
 
