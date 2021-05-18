@@ -8,7 +8,7 @@ int
 main(int argc, char *argv[]) {
 
     // allocate 15 pages memory
-    char* ptr[18];
+    char* ptr[25];
     const int n = 5;
     printf(1, "\nallocate %d pages memory\n", n);
     for(int i=0;i<n;i++) {
@@ -29,7 +29,7 @@ main(int argc, char *argv[]) {
 
     // processDetailsPrint();
 
-    const int m = 8;
+    const int m = 15;
     printf(1, "\nallocate %d more pages\n", m);
     for(int i=n;i<n+m;i++) {
         ptr[i] = sbrk(PGSIZE);

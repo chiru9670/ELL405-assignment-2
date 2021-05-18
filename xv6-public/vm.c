@@ -492,7 +492,7 @@ void moveToSwap(pte_t* a, char * pageva){
 int freeFIFO(){
   struct proc* p = myproc();
   uint a = PGROUNDUP(p->sz); 
-  for(int i=0;i<a;i+=PGSIZE){
+  for(int i=PGSIZE;i<a;i+=PGSIZE){  // Doesn't make sense to swap out 1st page
     pte_t* tooinfintyandbeyond = walkpgdir(p->pgdir,(void *)i,0);
     if( !(*tooinfintyandbeyond & PTE_PG) ){
         moveToSwap(tooinfintyandbeyond,(char *)i);
@@ -558,16 +558,18 @@ int freePage()
 
 void resetpteabit() {
   struct proc *p = myproc();
-  uint a = PGROUNDUP(p->sz);
-  for (int i = 0; i < a; i += PGSIZE)
-  {
-    pte_t *tooinfintyandbeyond = walkpgdir(p->pgdir, (void *)i, 0);
-    if (!((*tooinfintyandbeyond) & PTE_PG) && ((*tooinfintyandbeyond) & PTE_A))
+  if(strncmp(p->name, "init", strlen(p->name)) != 0 && strncmp(p->name, "sh", strlen(p->name)) != 0) {
+    uint a = PGROUNDUP(p->sz);
+    for (int i = 0; i < a; i += PGSIZE)
     {
-      (*tooinfintyandbeyond) &= ~PTE_A;
+      pte_t *tooinfintyandbeyond = walkpgdir(p->pgdir, (void *)i, 0);
+      if (!((*tooinfintyandbeyond) & PTE_PG) && ((*tooinfintyandbeyond) & PTE_A))
+      {
+        (*tooinfintyandbeyond) &= ~PTE_A;
+      }
     }
+    lcr3(V2P(p->pgdir));
   }
-  lcr3(V2P(p->pgdir));
 }
 
 //PAGEBREAK!
