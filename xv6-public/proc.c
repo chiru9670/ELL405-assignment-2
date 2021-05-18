@@ -299,30 +299,37 @@ exit(void)
   if(curproc == initproc)
     panic("init exiting");
 
-
+  //cprintf("1");
   // Close all open files.
+          // CHANGED
+#ifndef NONE
+        if(strncmp(myproc()->name, "init", strlen(myproc()->name)) != 0 && strncmp(myproc()->name, "sh", strlen(myproc()->name)) != 0 && removeSwapFile(myproc())==-1){
+          panic("wait: removeSwapFile command failed");
+        }
+#endif
+        // CHANGED
   for(fd = 0; fd < NOFILE; fd++){
     if(curproc->ofile[fd]){
       fileclose(curproc->ofile[fd]);
       curproc->ofile[fd] = 0;
     }
   }
-
+  //cprintf("2");
   // MyChange
   #ifdef TRUE
     processDetailViewer(curproc);
   #endif
-
+  //cprintf("3");
   begin_op();
   iput(curproc->cwd);
   end_op();
   curproc->cwd = 0;
 
   acquire(&ptable.lock);
-
+  //cprintf("4");
   // Parent might be sleeping in wait().
   wakeup1(curproc->parent);
-
+  //cprintf("5");
   // Pass abandoned children to init.
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->parent == curproc){
@@ -331,11 +338,12 @@ exit(void)
         wakeup1(initproc);
     }
   }
-
+  cprintf(myproc()->name);
   // Jump into the scheduler, never to return.
   curproc->state = ZOMBIE;
   sched();
   panic("zombie exit");
+  //cprintf("8");
 }
 
 // Wait for a child process to exit and return its pid.
@@ -361,13 +369,6 @@ wait(void)
         kfree(p->kstack);
         p->kstack = 0;
         freevm(p->pgdir);
-        // CHANGED
-#ifndef NONE
-        if(strncmp(p->name, "init", strlen(p->name)) != 0 && strncmp(p->name, "sh", strlen(p->name)) != 0 && removeSwapFile(p)==-1){
-          panic("wait: removeSwapFile command failed");
-        }
-#endif
-        // CHANGED
         p->pid = 0;
         p->parent = 0;
         p->name[0] = 0;
