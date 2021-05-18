@@ -107,14 +107,17 @@ exec(char *path, char **argv)
   curproc->pages_in_memory = PGROUNDUP(sz)/PGSIZE;
   curproc->total_page_faults = 0;
   curproc->total_page_outs = 0;
+#ifndef NONE
   if(strcmp(curproc->name, "init") != 0 && strcmp(curproc->name, "sh") != 0) {
     removeSwapFile(curproc);
   }
+#endif
   // CHANGED
 
   switchuvm(curproc);
 
   // CHANGED
+#ifndef NONE
   if(strcmp(curproc->name, "init") != 0 && strcmp(curproc->name, "sh") != 0) {
     createSwapFile(curproc);
     while(curproc->pages_in_memory >= MAX_PSYC_PAGES) {
@@ -124,6 +127,7 @@ exec(char *path, char **argv)
       // I am very afraid of this never ending... :(
     }
   }
+#endif
   // CHANGED
   freevm(oldpgdir);
   return 0;

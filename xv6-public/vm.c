@@ -238,7 +238,7 @@ allocuvm(pde_t *pgdir, uint oldsz, uint newsz)
 
     // CHANGED
 #ifndef NONE
-    if (curproc->pgdir == pgdir && strcmp(curproc->name, "init") != 0 && strcmp(curproc->name, "sh") != 0) // Not always true, when called in exec() this is not true
+    if (curproc->pgdir == pgdir && strcmp(curproc->name, "init") != 0 && strcmp(curproc->name, "sh") != 0) // Not always true, when called in exec() curproc->pgdir == pgdir is not true
     {
       if (curproc->pages_in_memory >= MAX_PSYC_PAGES - 1)
       {
@@ -309,6 +309,7 @@ deallocuvm(pde_t *pgdir, uint oldsz, uint newsz)
     }
 
     // CHANGED
+#ifndef NONE
     else if(*pte & PTE_PG) {
       if(myproc()->pgdir == pgdir) {
         // If current process is deallocating its own pages.
@@ -323,6 +324,7 @@ deallocuvm(pde_t *pgdir, uint oldsz, uint newsz)
       }
       *pte = 0;   // Not exactly correct when above 'if' doesn't run, but in that case the process gets cleaned up anyway later
     }
+#endif
     // CHANGED
   }
   return newsz;
