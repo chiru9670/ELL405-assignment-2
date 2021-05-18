@@ -118,7 +118,7 @@ exec(char *path, char **argv)
 
   // CHANGED
 #ifndef NONE
-  if(strcmp(curproc->name, "init") != 0 && strcmp(curproc->name, "sh") != 0) {
+  if(strncmp(curproc->name, "init", strlen(curproc->name)) != 0 && strncmp(curproc->name, "sh", strlen(curproc->name)) != 0) {
     createSwapFile(curproc);
     while(curproc->pages_in_memory >= MAX_PSYC_PAGES) {
       if(freePage() == -1) {

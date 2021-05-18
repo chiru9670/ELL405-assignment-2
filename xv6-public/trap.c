@@ -51,17 +51,7 @@ trap(struct trapframe *tf)
   case T_IRQ0 + IRQ_TIMER:
     // CHANGED
 #ifdef NFU
-    struct proc *p = myproc();
-    uint a = PGROUNDUP(p->sz);
-    for (int i = 0; i < a; i += PGSIZE)
-    {
-      pte_t *tooinfintyandbeyond = walkpgdir(p->pgdir, i, 0);
-      if (!((*tooinfintyandbeyond) & PTE_PG) && ((*tooinfintyandbeyond) & PTE_A))
-      {
-        (*tooinfintyandbeyond) &= ~PTE_A;
-      }
-    }
-    lcr3(V2P(p->pgdir));
+    resetpteabit();
 #endif
     // CHANGED
     if(cpuid() == 0){

@@ -6,6 +6,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "kalloc.h"
 
 struct {
   struct spinlock lock;
@@ -221,7 +222,7 @@ fork(void)
   np->total_page_outs = curproc->total_page_outs;
   np->total_page_faults = curproc->total_page_faults;
   np->pages_in_memory = curproc->pages_in_memory;
-  if(strcmp(np->name, "init") != 0 && strcmp(np->name, "sh") != 0)  // Don't create swapfiles for forks of init and sh, as they don't have swapfiles themselves
+  if(strncmp(np->name, "init", strlen(np->name)) != 0 && strncmp(np->name, "sh", strlen(np->name)) != 0)  // Don't create swapfiles for forks of init and sh, as they don't have swapfiles themselves
   {
     createSwapFile(np);
     char * buf = kalloc();  // Should I have used malloc here?
@@ -270,7 +271,7 @@ int processDetailViewer(struct proc *p) {
 
   // MyChange
   cprintf("Allocated Memory Pages : %d\n", p->pages_in_memory);
-  cprintf("Paged out : %d\n", sz/PGSIZE - p->pages_in_memory);
+  cprintf("Paged out : %d\n", p->sz/PGSIZE - p->pages_in_memory);
   cprintf("Page faults : %d\n", p->total_page_faults);
   cprintf("Totalnumber of pagedout : %d\n", p->total_page_outs);
 
@@ -282,7 +283,7 @@ int processDetailViewer(struct proc *p) {
   }
   cprintf("\n");
 
-  return (PGROUNDUP(sz)/PGSIZE);
+  return (PGROUNDUP(p->sz)/PGSIZE);
 }
 
 // Exit the current process.  Does not return.
@@ -362,7 +363,7 @@ wait(void)
         freevm(p->pgdir);
         // CHANGED
 #ifndef NONE
-        if(strcmp(p->name, "init") != 0 && strcmp(p->name, "sh") != 0 && removeSwapFile(p)==-1){
+        if(strncmp(p->name, "init", strlen(p->name)) != 0 && strncmp(p->name, "sh", strlen(p->name)) != 0 && removeSwapFile(p)==-1){
           panic("wait: removeSwapFile command failed");
         }
 #endif

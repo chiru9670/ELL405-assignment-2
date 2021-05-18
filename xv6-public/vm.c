@@ -7,6 +7,9 @@
 #include "proc.h"
 #include "elf.h"
 
+uint findPageIndexInSwapfile(uint vaddr, struct proc * proc);
+int freePage();
+
 extern char data[];  // defined by kernel.ld
 pde_t *kpgdir;  // for use in scheduler()
 
@@ -238,7 +241,7 @@ allocuvm(pde_t *pgdir, uint oldsz, uint newsz)
 
     // CHANGED
 #ifndef NONE
-    if (curproc->pgdir == pgdir && strcmp(curproc->name, "init") != 0 && strcmp(curproc->name, "sh") != 0) // Not always true, when called in exec() curproc->pgdir == pgdir is not true
+    if (curproc->pgdir == pgdir && strncmp(curproc->name, "init", strlen(curproc->name)) != 0 && strncmp(curproc->name, "sh", strlen(curproc->name)) != 0) // Not always true, when called in exec() curproc->pgdir == pgdir is not true
     {
       if (curproc->pages_in_memory >= MAX_PSYC_PAGES - 1)
       {
@@ -468,6 +471,68 @@ int swapinPage(uint faultingva) {
   return 1;
 }
 
+// Swaps out page at virtual address pageva whose pte is at a
+void moveToSwap(pte_t* a, char * pageva){
+  struct proc* p = myproc(); 
+  for(int i=0;i<MAX_TOTAL_PAGES;i++){
+    if(p->swapspace_indexes[i]==-1){
+      if(writeToSwapFile(p,pageva,i*PGSIZE,PGSIZE) == -1){
+        panic("Couldn't write to swap file!!");
+      }
+      p->swapspace_indexes[i] = (uint)pageva;
+      *a &= ~PTE_P;
+      *a |= PTE_PG;
+      kfree(P2V(*a));
+    }
+  }
+  lcr3(V2P(p->pgdir));
+}
+
+int freeFIFO(){
+  struct proc* p = myproc();
+  uint a = PGROUNDUP(p->sz); 
+  for(int i=0;i<a;i+=PGSIZE){
+    pte_t* tooinfintyandbeyond = walkpgdir(p->pgdir,(void *)i,0);
+    if( !(*tooinfintyandbeyond & PTE_PG) ){
+        moveToSwap(tooinfintyandbeyond,(char *)i);
+        return 0;
+    }
+  }
+  return -1;
+}
+
+int freeSCFIFO(){
+  struct proc* p = myproc();
+  uint a = PGROUNDUP(p->sz);
+  for(int j=0;j<2;j++){ 
+    for(int i=0;i<a;i+=PGSIZE){
+      pte_t* tooinfintyandbeyond = walkpgdir(p->pgdir,(void *)i,0);
+      if( !((*tooinfintyandbeyond) & PTE_PG) && ! ((*tooinfintyandbeyond) & PTE_A) ){
+          moveToSwap(tooinfintyandbeyond,(char *)i);
+          return 0;
+      }else if( !((*tooinfintyandbeyond) & PTE_PG) && ((*tooinfintyandbeyond) & PTE_A)){
+          (*tooinfintyandbeyond) &= ~PTE_A; 
+      }
+    }
+  }
+  return -1;
+}
+
+int freeNFU(){
+  struct proc* p = myproc();
+  uint a = PGROUNDUP(p->sz);
+  while(1){ 
+    for(int i=0;i<a;i+=PGSIZE){
+      pte_t* tooinfintyandbeyond = walkpgdir(p->pgdir,(void *)i,0);
+      if( !((*tooinfintyandbeyond) & PTE_PG) && !((*tooinfintyandbeyond) & PTE_A) ){
+          moveToSwap(tooinfintyandbeyond,(char *)i);
+          return 0;
+      }
+    }
+    yield();  // Try again later
+  }
+}
+
 // Swap a page out to swap file
 // Uses a page replacement algo
 int freePage()
@@ -490,66 +555,18 @@ int freePage()
   return 0;   // No page replacement algo specified
 }
 
-// Swaps out page at virtual address pageva whose pte is at a
-void moveToSwap(pte_t* a,uint pageva){
-  struct proc* p = myproc(); 
-  for(int i=0;i<MAX_TOTAL_PAGES;i++){
-    if(p->swapspace_indexes[i]==-1){
-      if(writeToSwapFile(p,pageva,i*PGSIZE,PGSIZE) == -1){
-        panic("Couldn't write to swap file!!");
-      }
-      p->swapspace_indexes[i] = pageva;
-      *a &= ~PTE_P;
-      *a |= PTE_PG;
-      kfree(P2V(*a));
+void resetpteabit() {
+  struct proc *p = myproc();
+  uint a = PGROUNDUP(p->sz);
+  for (int i = 0; i < a; i += PGSIZE)
+  {
+    pte_t *tooinfintyandbeyond = walkpgdir(p->pgdir, (void *)i, 0);
+    if (!((*tooinfintyandbeyond) & PTE_PG) && ((*tooinfintyandbeyond) & PTE_A))
+    {
+      (*tooinfintyandbeyond) &= ~PTE_A;
     }
   }
   lcr3(V2P(p->pgdir));
-}
-
-int freeFIFO(){
-  struct proc* p = myproc();
-  uint a = PGROUNDUP(p->sz); 
-  for(int i=0;i<a;i+=PGSIZE){
-    pte_t* tooinfintyandbeyond = walkpgdir(p->pgdir,i,0);
-    if( !(*tooinfintyandbeyond & PTE_PG) ){
-        moveToSwap(tooinfintyandbeyond,i);
-        return 0;
-    }
-  }
-  return -1;
-}
-
-int freeSCFIFO(){
-  struct proc* p = myproc();
-  uint a = PGROUNDUP(p->sz);
-  for(int j=0;j<2;j++){ 
-    for(int i=0;i<a;i+=PGSIZE){
-      pte_t* tooinfintyandbeyond = walkpgdir(p->pgdir,i,0);
-      if( !((*tooinfintyandbeyond) & PTE_PG) && ! ((*tooinfintyandbeyond) & PTE_A) ){
-          moveToSwap(tooinfintyandbeyond,i);
-          return 0;
-      }else if( !((*tooinfintyandbeyond) & PTE_PG) && ((*tooinfintyandbeyond) & PTE_A)){
-          (*tooinfintyandbeyond) &= ~PTE_A; 
-      }
-    }
-  }
-  return -1;
-}
-
-int freeNFU(){
-  struct proc* p = myproc();
-  uint a = PGROUNDUP(p->sz);
-  while(1){ 
-    for(int i=0;i<a;i+=PGSIZE){
-      pte_t* tooinfintyandbeyond = walkpgdir(p->pgdir,i,0);
-      if( !((*tooinfintyandbeyond) & PTE_PG) && !((*tooinfintyandbeyond) & PTE_A) ){
-          moveToSwap(tooinfintyandbeyond,i);
-          return 0;
-      }
-    }
-    yield();  // Try again later
-  }
 }
 
 //PAGEBREAK!

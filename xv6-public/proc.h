@@ -54,7 +54,7 @@ struct proc {
   char name[16];               // Process name (debugging)
   //Swap file. must initiate with create swap file
   struct file *swapFile;      //page file
-  int swapspace_indexes[MAX_TOTAL_PAGES];
+  uint swapspace_indexes[MAX_TOTAL_PAGES];
   int total_page_outs;
   int total_page_faults;
   int pages_in_memory;
@@ -62,6 +62,7 @@ struct proc {
 
 int freePage();
 int swapinPage(uint faultingva);
+void resetpteabit();
 // int freeFIFO();
 // int freeSCFIFO();
 // int freeNFU();
