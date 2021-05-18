@@ -218,10 +218,10 @@ fork(void)
   pid = np->pid;
 
   //CHANGED
-#ifndef NONE
   np->total_page_outs = curproc->total_page_outs;
   np->total_page_faults = curproc->total_page_faults;
   np->pages_in_memory = curproc->pages_in_memory;
+#ifndef NONE
   if(strncmp(np->name, "init", strlen(np->name)) != 0 && strncmp(np->name, "sh", strlen(np->name)) != 0)  // Don't create swapfiles for forks of init and sh, as they don't have swapfiles themselves
   {
     if(createSwapFile(np)){
