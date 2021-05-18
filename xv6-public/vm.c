@@ -380,10 +380,17 @@ copyuvm(pde_t *pgdir, uint sz)
   for(i = 0; i < sz; i += PGSIZE){
     if((pte = walkpgdir(pgdir, (void *) i, 0)) == 0)
       panic("copyuvm: pte should exist");
-    if(!(*pte & PTE_P))
+    if(!(*pte & PTE_P) && !(*pte & PTE_PG))
       panic("copyuvm: page not present");
     pa = PTE_ADDR(*pte);
     flags = PTE_FLAGS(*pte);
+    if(*pte & PTE_PG) {
+      pte_t * childpte;
+      if ((childpte = walkpgdir(d, (void *)i, 1)) == 0)
+        goto bad;
+      *childpte = pa | flags | PTE_PG;
+      continue;
+    }
     if((mem = kalloc()) == 0)
       goto bad;
     memmove(mem, (char*)P2V(pa), PGSIZE);

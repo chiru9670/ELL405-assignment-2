@@ -20,15 +20,6 @@ main(int argc, char *argv[]) {
 
     processDetailsPrint();
 
-    // printf(1, "allocating 1 more page...\n");
-    // ptr[12] = sbrk(PGSIZE);
-    // for (int j = 0; j < PGSIZE / sizeof(char); j += sizeof(char))
-    // {
-    //     ptr[12][j] = 'j';
-    // }
-
-    // processDetailsPrint();
-
     const int m = 15;
     printf(1, "\nallocate %d more pages\n", m);
     for(int i=n;i<n+m;i++) {
@@ -47,26 +38,26 @@ main(int argc, char *argv[]) {
     // }
     // processDetailsPrint();
 
-    // int a = fork();
+    int a = fork();
 
-    // if(a == 0) {
-    //     printf(1, "Child is running, pid = %d", getpid());
+    if(a == 0) {
+        printf(1, "Child is running, pid = %d", getpid());
+        processDetailsPrint();
+
+        printf(1, "Printing a random value ptr[5][100] = %d", ptr[16][100]);
+        processDetailsPrint();
+        exit();
+    }
+    else {
+        wait();
+
+    //     sbrk(-m*PGSIZE);
     //     processDetailsPrint();
 
-    //     printf(1, "Printing a random value ptr[5][100] = %d", ptr[5][100]);
-    //     processDetailsPrint();
-    //     exit();
-    // }
-    // else {
-    //     wait();
-
-    //     sbrk(-18*PGSIZE);
-    //     processDetailsPrint();
-
-    //     for(int i=0;i<5;i++) ptr[i] = (int*) sbrk(PGSIZE);
+    //     for(int i=0;i<5;i++) ptr[i] = sbrk(PGSIZE);
 
     //     processDetailsPrint();
-    // }
+    }
     exit();
 
 }

@@ -224,7 +224,9 @@ fork(void)
   np->pages_in_memory = curproc->pages_in_memory;
   if(strncmp(np->name, "init", strlen(np->name)) != 0 && strncmp(np->name, "sh", strlen(np->name)) != 0)  // Don't create swapfiles for forks of init and sh, as they don't have swapfiles themselves
   {
-    createSwapFile(np);
+    if(createSwapFile(np)){
+      panic("fork: Error creating swap file of child!!");
+    }
     char * buf = kalloc();  // Should I have used malloc here?
     for(int i = 0; i < MAX_TOTAL_PAGES; ++i) {
       if(curproc->swapspace_indexes[i] != -1) {
