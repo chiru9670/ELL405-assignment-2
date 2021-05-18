@@ -558,7 +558,7 @@ int freePage()
 
 void resetpteabit() {
   struct proc *p = myproc();
-  if(strncmp(p->name, "init", strlen(p->name)) != 0 && strncmp(p->name, "sh", strlen(p->name)) != 0) {
+  if(p && strncmp(p->name, "init", strlen(p->name)) != 0 && strncmp(p->name, "sh", strlen(p->name)) != 0) {// p can be zero on bootup, initcode.asm process returns 0 on myproc
     uint a = PGROUNDUP(p->sz);
     for (int i = 0; i < a; i += PGSIZE)
     {
