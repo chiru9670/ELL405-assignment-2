@@ -115,6 +115,7 @@ found:
   p->total_page_outs = 0;
   p->pages_in_memory = 0;
   for(int i=0;i<MAX_TOTAL_PAGES;i++) p->swapspace_indexes[i] = -1;
+  p->swapFile = (struct file *)0;
   return p;
 }
 
@@ -215,6 +216,30 @@ fork(void)
 
   pid = np->pid;
 
+  //CHANGED
+#ifndef NONE
+  np->total_page_outs = curproc->total_page_outs;
+  np->total_page_faults = curproc->total_page_faults;
+  np->pages_in_memory = curproc->pages_in_memory;
+  if(strcmp(np->name, "init") != 0 && strcmp(np->name, "sh") != 0)  // Don't create swapfiles for forks of init and sh, as they don't have swapfiles themselves
+  {
+    createSwapFile(np);
+    char * buf = kalloc();  // Should I have used malloc here?
+    for(int i = 0; i < MAX_TOTAL_PAGES; ++i) {
+      if(curproc->swapspace_indexes[i] != -1) {
+        if(readFromSwapFile(curproc, buf, i*PGSIZE, PGSIZE) == -1) {
+          panic("fork: Error reading swap file of parent!!");
+        }
+        if(writeToSwapFile(np, buf, i*PGSIZE, PGSIZE) == -1) {
+          panic("fork: Error writing swap file of child!!");
+        }
+      }
+      np->swapspace_indexes[i] = curproc->swapspace_indexes[i];
+    }
+    kfree(buf);
+  }
+#endif
+  //CHANGED
   acquire(&ptable.lock);
 
   np->state = RUNNABLE;
@@ -337,7 +362,7 @@ wait(void)
         freevm(p->pgdir);
         // CHANGED
 #ifndef NONE
-        if(removeSwapFile(p)==-1){
+        if(strcmp(p->name, "init") != 0 && strcmp(p->name, "sh") != 0 && removeSwapFile(p)==-1){
           panic("wait: removeSwapFile command failed");
         }
 #endif

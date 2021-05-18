@@ -108,9 +108,9 @@ exec(char *path, char **argv)
   curproc->total_page_faults = 0;
   curproc->total_page_outs = 0;
 #ifndef NONE
-  if(strcmp(curproc->name, "init") != 0 && strcmp(curproc->name, "sh") != 0) {
-    removeSwapFile(curproc);
-  }
+  // if(strcmp(curproc->name, "init") != 0 && strcmp(curproc->name, "sh") != 0) {
+  removeSwapFile(curproc);    // Hoping it silently fails if swap file not found
+  // }
 #endif
   // CHANGED
 
