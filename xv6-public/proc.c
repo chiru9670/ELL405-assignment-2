@@ -274,19 +274,15 @@ int processDetailViewer(struct proc *p) {
     state = "???";
   cprintf("%d %s %s\n", p->pid, state, p->name);
 
-  // MyChange
-  cprintf("Allocated Memory Pages : %d\n", p->pages_in_memory);
-  cprintf("Paged out : %d\n", p->sz/PGSIZE - p->pages_in_memory);
-  cprintf("Page faults : %d\n", p->total_page_faults);
-  cprintf("Totalnumber of pagedout : %d\n", p->total_page_outs);
-
-
   if(p->state == SLEEPING){
     getcallerpcs((uint*)p->context->ebp+2, pc);
     for(i=0; i<10 && pc[i] != 0; i++)
       cprintf(" %p", pc[i]);
   }
   cprintf("\n");
+
+   // MyChange
+  cprintf("%d %d %d %d\n", p->pages_in_memory, PGROUNDUP(p->sz)/PGSIZE - p->pages_in_memory, p->total_page_faults, p->total_page_outs);
 
   return (PGROUNDUP(p->sz)/PGSIZE);
 }
@@ -597,6 +593,7 @@ procdump(void)
     total_pages_in_memory += processDetailViewer(p);
   }
   // MyChange
-  int percentage = ((totalPagesAvailable - total_pages_in_memory)*100)/totalPagesAvailable;
-  cprintf("%d%% = free pages in the system", percentage);
+  // cprintf("total_pages_in_memory = %d, totalPagesAvailable = %d\n", total_pages_in_memory, totalPagesAvailable);
+  int percentage = ((totalPagesAvailable - total_pages_in_memory)*100)/(totalPagesAvailable);
+  cprintf("%d%% free pages in the system\n", percentage);
 }
