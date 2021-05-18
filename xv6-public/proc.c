@@ -228,14 +228,17 @@ fork(void)
       panic("fork: Error creating swap file of child!!");
     }
     char * buf = kalloc();  // Should I have used malloc here?
-    for(int i = 0; i < MAX_TOTAL_PAGES; ++i) {
-      if(curproc->swapspace_indexes[i] != -1) {
-        if(readFromSwapFile(curproc, buf, i*PGSIZE, PGSIZE) == -1) {
-          panic("fork: Error reading swap file of parent!!");
-        }
-        if(writeToSwapFile(np, buf, i*PGSIZE, PGSIZE) == -1) {
-          panic("fork: Error writing swap file of child!!");
-        }
+    int last = 0;
+    for(int i=0;i<MAX_TOTAL_PAGES;i++){
+      if(curproc->swapspace_indexes[i]!=-1) 
+        last = i+1;
+    }
+    for(int i = 0; i < last; ++i) {
+      if(readFromSwapFile(curproc, buf, i*PGSIZE, PGSIZE) == -1) {
+        panic("fork: Error reading swap file of parent!!");
+      }
+      if(writeToSwapFile(np, buf, i*PGSIZE, PGSIZE) == -1) {
+        panic("fork: Error writing swap file of child!!");
       }
       np->swapspace_indexes[i] = curproc->swapspace_indexes[i];
     }
