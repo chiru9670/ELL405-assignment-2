@@ -99,7 +99,32 @@ exec(char *path, char **argv)
   curproc->sz = sz;
   curproc->tf->eip = elf.entry;  // main
   curproc->tf->esp = sp;
+
+  // CHANGED
+  for(int i = 0; i < MAX_TOTAL_PAGES; ++i) {
+    curproc->swapspace_indexes[i] = -1;
+  }
+  curproc->pages_in_memory = PGROUNDUP(sz)/PGSIZE;
+  curproc->total_page_faults = 0;
+  curproc->total_page_outs = 0;
+  if(strcmp(curproc->name, "init") != 0 && strcmp(curproc->name, "sh") != 0) {
+    removeSwapFile(curproc);
+  }
+  // CHANGED
+
   switchuvm(curproc);
+
+  // CHANGED
+  if(strcmp(curproc->name, "init") != 0 && strcmp(curproc->name, "sh") != 0) {
+    createSwapFile(curproc);
+    while(curproc->pages_in_memory >= MAX_PSYC_PAGES) {
+      if(freePage() == -1) {
+        panic("exec: Failed to find a page to free!!\n");
+      }
+      // I am very afraid of this never ending... :(
+    }
+  }
+  // CHANGED
   freevm(oldpgdir);
   return 0;
 
