@@ -282,7 +282,7 @@ int processDetailViewer(struct proc *p) {
   cprintf("\n");
 
    // MyChange
-  cprintf("%d %d %d %d\n", p->pages_in_memory, PGROUNDUP(p->sz)/PGSIZE - p->pages_in_memory, p->total_page_faults, p->total_page_outs);
+  cprintf("%d %d %d %d\n", PGROUNDUP(p->sz)/PGSIZE, PGROUNDUP(p->sz)/PGSIZE - p->pages_in_memory, p->total_page_faults, p->total_page_outs);
 
   return (PGROUNDUP(p->sz)/PGSIZE);
 }
