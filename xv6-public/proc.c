@@ -338,7 +338,7 @@ exit(void)
         wakeup1(initproc);
     }
   }
-  cprintf(myproc()->name);
+  // cprintf(myproc()->name);
   // Jump into the scheduler, never to return.
   curproc->state = ZOMBIE;
   sched();

@@ -10,7 +10,7 @@ main(int argc, char *argv[]) {
     // allocate 15 pages memory
     char* ptr[18];
     const int n = 5;
-    printf(1, "allocate 5 pages memory\n");
+    printf(1, "\nallocate %d pages memory\n", n);
     for(int i=0;i<n;i++) {
         ptr[i] = sbrk(PGSIZE);
         for(int j=0;j<PGSIZE/sizeof(char);j+=sizeof(char)) {
@@ -29,10 +29,12 @@ main(int argc, char *argv[]) {
 
     // processDetailsPrint();
 
-    printf(1, "allocate 3 more pages\n");
-    for(int i=n;i<n+3;i++) {
+    const int m = 8;
+    printf(1, "\nallocate %d more pages\n", m);
+    for(int i=n;i<n+m;i++) {
         ptr[i] = sbrk(PGSIZE);
-        printf(1, "Page %d", i);
+        printf(1, "\nPage %d\n", i);
+        printf(1, "\nptr[%d] = %x\n", i, (uint)ptr[i]);
         for(int j=0;j<PGSIZE/sizeof(char);j+=sizeof(char)) {
             ptr[i][j] = 'j'; 
         }
@@ -65,5 +67,6 @@ main(int argc, char *argv[]) {
 
     //     processDetailsPrint();
     // }
+    exit();
 
 }

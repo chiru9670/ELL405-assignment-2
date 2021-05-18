@@ -482,7 +482,8 @@ void moveToSwap(pte_t* a, char * pageva){
       p->swapspace_indexes[i] = (uint)pageva;
       *a &= ~PTE_P;
       *a |= PTE_PG;
-      kfree(P2V(*a));
+      cprintf("before kfree, a = %x, *a=%x, P2V(*a) = %x\n", a, *a, P2V(*a)); //DEBUG
+      kfree(P2V(PTE_ADDR(*a)));
     }
   }
   lcr3(V2P(p->pgdir));
